@@ -45,6 +45,9 @@ button.ghost{background:transparent;color:var(--mut);border:1px solid var(--line
 .stats div{background:#0b1226;border:1px solid var(--line);border-radius:12px;padding:12px}
 .stats b{display:block;font-size:24px;color:var(--c1)}
 .stats span{font-size:12px;color:var(--mut)}
+.modes{display:inline-flex;gap:6px;background:#0b1226;border:1px solid var(--line);border-radius:12px;padding:4px;margin-top:10px}
+.modes button.on{background:linear-gradient(90deg,var(--c1),var(--c2));color:#04101f;border-color:transparent}
+#pairin input{display:block;margin:10px auto}
 .toast{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(36px,9vw,64px);font-weight:800;letter-spacing:.1em;background:#070b16cc;border-radius:20px;color:var(--c1);text-shadow:0 0 30px #22d3ee;z-index:5}
 </style>
 </head>
@@ -53,6 +56,7 @@ button.ghost{background:transparent;color:var(--mut);border:1px solid var(--line
   <div class="top">
     <div class="logo">KEY RUSH · INFORMATIKA</div>
     <div class="chips">
+      <div class="chip hidden" id="pl">Giliran <b id="pn">-</b></div>
       <div class="chip">Level <b id="lv">1</b></div>
       <div class="chip">Skor <b id="sc">0</b></div>
       <div class="chip lives" id="hp">♥♥♥</div>
@@ -63,7 +67,10 @@ button.ghost{background:transparent;color:var(--mut);border:1px solid var(--line
   <section id="start" class="center">
     <h1>Siap menguji kecepatan jarimu?</h1>
     <p>Tekan tombol keyboard yang sama dengan karakter di layar. Setiap 10 benar, level naik dan waktu makin singkat.</p>
-    <input id="nm" maxlength="30" placeholder="Nama (boleh berpasangan)" autocomplete="off">
+    <div class="modes"><button class="ghost on" id="m1">Solo</button><button class="ghost" id="m2">Pasangan</button></div>
+    <p class="hint hidden" id="pdesc">Bermain bergantian di satu komputer. Skor tertinggi menang!</p>
+    <input id="nm" maxlength="30" placeholder="Nama" autocomplete="off">
+    <div id="pairin" class="hidden"><input id="n1" maxlength="20" placeholder="Nama Pemain 1" autocomplete="off"><input id="n2" maxlength="20" placeholder="Nama Pemain 2" autocomplete="off"></div>
     <div><button id="go">MULAI</button></div>
     <div class="lv" id="board"></div>
   </section>
@@ -78,13 +85,14 @@ button.ghost{background:transparent;color:var(--mut);border:1px solid var(--line
   </section>
 
   <section id="over" class="hidden center">
-    <h1>Waktu habis!</h1>
+    <h1 id="ovt">Waktu habis!</h1>
     <p id="who"></p>
     <div class="stats">
       <div><b id="fs">0</b><span>Skor</span></div>
       <div><b id="fl">1</b><span>Level tertinggi</span></div>
       <div><b id="fa">0%</b><span>Ketepatan</span></div>
     </div>
+    <div class="lv hidden" id="vs"></div>
     <button id="again">MAIN LAGI</button>
     <div class="lv" id="board2"></div>
   </section>
@@ -96,6 +104,9 @@ const $=s=>document.querySelector(s);
 const POOLS=["0123456789","abcdefghijklmnopqrstuvwxyz","abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789","abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*?+=-"];
 const limit=l=>Math.max(0.6,3.2-(l-1)*0.4)*1000;
 let S={},audio=null,muted=false,raf=0,name="";
+const SHEET_URL="https://script.google.com/macros/s/AKfycbzs38C8Gj4I-7j72h4Evk9fijO_WSiJAu-4ouRWvS67TyMS28TbbB4cazxSogfDHV3TaA/exec"; // tempel URL Web App Apps Script (berakhiran /exec) di antara tanda kutip
+function sendScore(r){if(!SHEET_URL)return;try{fetch(SHEET_URL,{method:"POST",mode:"no-cors",body:JSON.stringify(r)}).catch(()=>{})}catch(e){}}
+async function loadClass(){if(!SHEET_URL)return;try{const rows=await (await fetch(SHEET_URL)).json();const h='<div>Papan skor kelas</div>'+rows.slice(0,5).map((r,i)=>`<div><span>${i+1}. ${esc(String(r.n))}</span><b>${r.s} · Lv ${r.l}</b></div>`).join("");$("#board").innerHTML=h;$("#board2").innerHTML=h}catch(e){}}
 
 function beep(f,d,t){if(muted||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.type=t||"sine";o.frequency.value=f;g.gain.value=.06;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+d);o.stop(audio.currentTime+d)}catch(e){}}
 function loadLB(){try{return JSON.parse(localStorage.getItem("keyrush.lb")||"[]")}catch(e){return[]}}
@@ -109,16 +120,27 @@ function tick(){if(S.on){const r=1-(performance.now()-S.t0)/S.dur;$("#tb").style
 function ok(){S.on=false;S.right++;S.total++;S.streak++;S.hit++;S.score+=10*S.level*(1+Math.floor(S.streak/5));flash("ok");beep(660+S.streak*20,.12);
   if(S.hit>=10){S.level++;S.hit=0;beep(880,.25,"triangle");const t=$("#toast");t.textContent="LEVEL "+S.level;t.classList.remove("hidden");setTimeout(()=>{t.classList.add("hidden");next()},1100)}else setTimeout(next,110)}
 function miss(){S.on=false;S.total++;S.lives--;S.streak=0;flash("bad");beep(160,.25,"sawtooth");hud();if(S.lives<=0)setTimeout(end,350);else setTimeout(next,350)}
-function end(){cancelAnimationFrame(raf);saveLB({n:name,s:S.score,l:S.level});drawLB();$("#who").textContent=name;$("#fs").textContent=S.score;$("#fl").textContent=S.level;$("#fa").textContent=(S.total?Math.round(S.right/S.total*100):0)+"%";show("over")}
+function end(){cancelAnimationFrame(raf);const acc=S.total?Math.round(S.right/S.total*100):0;saveLB({n:name,s:S.score,l:S.level});drawLB();sendScore({n:name,s:S.score,l:S.level,a:acc,m:mode});setTimeout(loadClass,1500);
+  $("#who").textContent=name;$("#fs").textContent=S.score;$("#fl").textContent=S.level;$("#fa").textContent=acc+"%";
+  const vs=$("#vs"),btn=$("#again");vs.classList.add("hidden");$("#ovt").textContent="Waktu habis!";btn.textContent="MAIN LAGI";
+  if(mode==="pair"){res[turn]={n:name,s:S.score,l:S.level};
+    if(turn===0){$("#ovt").textContent="Giliran selesai!";btn.textContent="GILIRAN "+P[1].toUpperCase()}
+    else{const a=res[0],b=res[1];$("#ovt").textContent=a.s===b.s?"Seri! Kalian kompak 🤝":(a.s>b.s?a:b).n+" menang! 🏆";vs.innerHTML=res.map(r=>`<div><span>${esc(r.n)}</span><b>${r.s} · Lv ${r.l}</b></div>`).join("");vs.classList.remove("hidden")}}
+  show("over")}
+let mode="solo",P=[],res=[],turn=0;
+const esc=s=>s.replace(/[<>&]/g,"");
+function begin(n){name=n;S={on:false,level:1,score:0,lives:3,hit:0,streak:0,total:0,right:0,cur:""};$("#pl").classList.toggle("hidden",mode!=="pair");$("#pn").textContent=n;show("play");next();cancelAnimationFrame(raf);tick()}
 function start(){try{audio=audio||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
-  name=$("#nm").value.trim()||"Pemain";S={on:false,level:1,score:0,lives:3,hit:0,streak:0,total:0,right:0,cur:""};show("play");next();cancelAnimationFrame(raf);tick()}
+  if(mode==="pair"){P=[$("#n1").value.trim()||"Pemain 1",$("#n2").value.trim()||"Pemain 2"];res=[];turn=0;begin(P[0])}else begin($("#nm").value.trim()||"Pemain")}
+function setMode(m){mode=m;$("#m1").classList.toggle("on",m==="solo");$("#m2").classList.toggle("on",m==="pair");$("#nm").classList.toggle("hidden",m==="pair");$("#pairin").classList.toggle("hidden",m!=="pair");$("#pdesc").classList.toggle("hidden",m!=="pair")}
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&!$("#start").classList.contains("hidden")&&document.activeElement.id==="nm"){start();return}
   if(!S.on||e.ctrlKey||e.metaKey||e.altKey||e.key.length!==1)return;
   e.preventDefault();e.key===S.cur?ok():miss()});
-$("#go").onclick=start;$("#again").onclick=()=>show("start");
+$("#go").onclick=start;$("#again").onclick=()=>{if(mode==="pair"&&turn===0){turn=1;begin(P[1])}else show("start")};
+$("#m1").onclick=()=>setMode("solo");$("#m2").onclick=()=>setMode("pair");
 $("#mute").onclick=()=>{muted=!muted;$("#mute").textContent="Suara: "+(muted?"OFF":"ON")};
-drawLB();
+drawLB();loadClass();
 </script>
 </body>
 </html>
