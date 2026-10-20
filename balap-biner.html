@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Balap Biner – Ice Breaking Informatika</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:dark;--bg:#070b16;--panel:#0f1730;--line:#223056;--tx:#e8eeff;--mut:#8b9ac4;--c1:#22d3ee;--c2:#8b5cf6;--ok:#34d399;--bad:#fb7185;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(900px 500px at 15% -10%,#1b2a6b55,transparent),radial-gradient(700px 500px at 100% 110%,#5b21b655,transparent),var(--bg);color:var(--tx);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;display:flex;justify-content:center;align-items:center;padding:16px;overflow:auto}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px;opacity:.18;pointer-events:none}
+.app{position:relative;width:100%;max-width:760px;background:linear-gradient(160deg,#0f1730ee,#0a1024ee);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 0 60px #22d3ee14,0 20px 60px #000a}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.logo{font-weight:800;letter-spacing:.14em;font-size:15px;background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:#0b1226;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:13px;color:var(--mut)}
+.chip b{color:var(--tx);font-variant-numeric:tabular-nums}
+.lives{color:var(--bad);letter-spacing:2px}
+.hidden{display:none!important}
+.stage{background:#080e20;border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
+.pips{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+.pips s{width:34px;height:8px;border-radius:5px;background:#16213f;text-decoration:none}
+.pips s.on{background:linear-gradient(90deg,var(--c1),var(--c2));box-shadow:0 0 10px #22d3ee88}
+.lbl{font-size:12px;letter-spacing:.16em;color:var(--mut);text-transform:uppercase;margin:6px 0}
+.q,.ans{display:flex;justify-content:center;align-items:flex-start;gap:6px;min-height:84px;flex-wrap:wrap}
+.big{font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:clamp(48px,12vw,84px);font-weight:800;color:var(--c1);text-shadow:0 0 24px #22d3ee88;line-height:1.1}
+.cl{display:flex;flex-direction:column;align-items:center;min-width:clamp(30px,8vw,56px)}
+.cl b{font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:clamp(34px,8vw,56px);font-weight:800;color:var(--c1);text-shadow:0 0 18px #22d3ee66;line-height:1.2}
+.cl i{font-style:normal;font-size:12px;color:var(--mut);border-top:1px solid var(--line);padding-top:2px;width:100%;text-align:center}
+.ans{border-top:1px dashed var(--line);margin-top:10px;padding-top:12px}
+.ans .big,.ans .cl b{color:var(--tx);text-shadow:none}
+.ans.ok .big,.ans.ok .cl b{color:var(--ok);text-shadow:0 0 20px #34d399aa}
+.ans.bad .big,.ans.bad .cl b{color:var(--bad);text-shadow:0 0 20px #fb7185aa}
+.bar{height:10px;border-radius:8px;background:#121b38;overflow:hidden;margin:12px 0 10px}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--c1),var(--c2));border-radius:8px}
+.hint{color:var(--mut);font-size:14px;min-height:1.5em}
+.combo{color:#fbbf24;font-weight:700}
+h1{margin:6px 0 6px;font-size:clamp(28px,6vw,40px)}
+p{color:var(--mut);line-height:1.55;margin:6px 0}
+.center{text-align:center}
+input{width:100%;max-width:340px;background:#0b1226;border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:12px 14px;font-size:16px;margin:12px 0;outline:none}
+input:focus{border-color:var(--c1);box-shadow:0 0 0 3px #22d3ee22}
+#pairin input{display:block;margin:10px auto}
+button{cursor:pointer;border:0;border-radius:12px;padding:13px 28px;font-size:16px;font-weight:700;color:#04101f;background:linear-gradient(90deg,var(--c1),var(--c2));box-shadow:0 0 24px #22d3ee44}
+button:hover{filter:brightness(1.1)}
+button.ghost{background:transparent;color:var(--mut);border:1px solid var(--line);box-shadow:none;padding:6px 12px;font-size:13px}
+.modes{display:inline-flex;gap:6px;background:#0b1226;border:1px solid var(--line);border-radius:12px;padding:4px;margin-top:10px}
+.modes button.on{background:linear-gradient(90deg,var(--c1),var(--c2));color:#04101f;border-color:transparent}
+.lv{margin:18px auto 4px;max-width:340px;text-align:left;font-size:14px}
+.lv div{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--line);color:var(--mut)}
+.lv div:first-child{color:var(--c1);font-weight:700;border-bottom-color:var(--c1)}
+.lv b{color:var(--tx)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.stats div{background:#0b1226;border:1px solid var(--line);border-radius:12px;padding:12px}
+.stats b{display:block;font-size:24px;color:var(--c1)}
+.stats span{font-size:12px;color:var(--mut)}
+.toast{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(36px,9vw,64px);font-weight:800;letter-spacing:.1em;background:#070b16cc;border-radius:20px;color:var(--c1);text-shadow:0 0 30px #22d3ee;z-index:5}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="logo">BALAP BINER · INFORMATIKA</div>
+    <div class="chips">
+      <div class="chip hidden" id="pl">Giliran <b id="pn">-</b></div>
+      <div class="chip">Level <b id="lv">1</b></div>
+      <div class="chip">Skor <b id="sc">0</b></div>
+      <div class="chip lives" id="hp">♥♥♥</div>
+      <button class="ghost" id="mute">Suara: ON</button>
+    </div>
+  </div>
+
+  <section id="start" class="center">
+    <h1>Siap berpikir seperti komputer?</h1>
+    <p>Ubah bilangan desimal ke biner, atau sebaliknya, sebelum waktu habis. Tiap 5 jawaban benar level naik: bilangannya makin panjang, waktunya makin singkat, dan mulai level 5 bantuan bobot bit dihilangkan.</p>
+    <div class="modes"><button class="ghost on" id="m1">Solo</button><button class="ghost" id="m2">Pasangan</button></div>
+    <p class="hint hidden" id="pdesc">Bermain bergantian di satu komputer. Skor tertinggi menang!</p>
+    <input id="nm" maxlength="30" placeholder="Nama" autocomplete="off">
+    <div id="pairin" class="hidden"><input id="n1" maxlength="20" placeholder="Nama Pemain 1" autocomplete="off"><input id="n2" maxlength="20" placeholder="Nama Pemain 2" autocomplete="off"></div>
+    <div><button id="go">MULAI</button></div>
+    <div class="lv" id="board"></div>
+  </section>
+
+  <section id="play" class="hidden">
+    <div class="stage">
+      <div class="pips" id="pips"></div>
+      <div class="lbl" id="qlab"></div>
+      <div class="q" id="q"></div>
+      <div class="ans" id="a"></div>
+      <div class="bar"><i id="tb"></i></div>
+      <div class="hint" id="hint">&nbsp;</div>
+    </div>
+  </section>
+
+  <section id="over" class="hidden center">
+    <h1 id="ovt">Permainan selesai!</h1>
+    <p id="who"></p>
+    <div class="stats">
+      <div><b id="fs">0</b><span>Skor</span></div>
+      <div><b id="fl">1</b><span>Level tertinggi</span></div>
+      <div><b id="fa">0</b><span>Jawaban benar</span></div>
+    </div>
+    <div class="lv hidden" id="vs"></div>
+    <button id="again">MAIN LAGI</button>
+    <div class="lv" id="board2"></div>
+  </section>
+  <div class="toast hidden" id="toast"></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>s.replace(/[<>&]/g,"");
+const SHEET_URL="https://script.google.com/macros/s/AKfycbzs38C8Gj4I-7j72h4Evk9fijO_WSiJAu-4ouRWvS67TyMS28TbbB4cazxSogfDHV3TaA/exec";
+const GAME="biner";
+function sendScore(r){if(!SHEET_URL)return;try{fetch(SHEET_URL,{method:"POST",mode:"no-cors",body:JSON.stringify(Object.assign({g:GAME},r))}).catch(()=>{})}catch(e){}}
+async function loadClass(){if(!SHEET_URL)return;try{const rows=await (await fetch(SHEET_URL+"?game="+GAME)).json();const h='<div>Papan skor kelas</div>'+rows.slice(0,5).map((r,i)=>`<div><span>${i+1}. ${esc(String(r.n))}</span><b>${r.s} · Lv ${r.l}</b></div>`).join("");$("#board").innerHTML=h;$("#board2").innerHTML=h}catch(e){}}
+
+const PLAN=[[3,"db"],[4,"db"],[5,"db"],[4,"bd"],[6,"db"],[6,"bd"],[7,"mix"],[8,"mix"]];
+const cfg=l=>PLAN[Math.min(l,PLAN.length)-1];
+const helpOn=l=>l<=4;
+const limit=(bits,l)=>(3+1.4*bits)*Math.max(0.35,1.15-0.07*l)*1000;
+let S={on:false,level:1,lives:3},audio=null,muted=false,raf=0,mode="solo",P=[],res=[],turn=0,name="";
+
+function beep(f,d,t){if(muted||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.type=t||"sine";o.frequency.value=f;g.gain.value=.06;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+d);o.stop(audio.currentTime+d)}catch(e){}}
+function loadLB(){try{return JSON.parse(localStorage.getItem("biner.lb")||"[]")}catch(e){return[]}}
+function saveLB(r){try{const a=loadLB();a.push(r);a.sort((x,y)=>y.s-x.s);localStorage.setItem("biner.lb",JSON.stringify(a.slice(0,5)))}catch(e){}}
+function drawLB(){const a=loadLB();const h='<div>Papan skor komputer ini</div>'+(a.length?a.map((r,i)=>`<div><span>${i+1}. ${esc(r.n)}</span><b>${r.s} · Lv ${r.l}</b></div>`).join(""):"<div><span>Belum ada skor</span><b>–</b></div>");$("#board").innerHTML=h;$("#board2").innerHTML=h}
+function show(id){["start","play","over"].forEach(x=>$("#"+x).classList.toggle("hidden",x!==id))}
+function hud(){$("#lv").textContent=S.level;$("#sc").textContent=S.score||0;$("#hp").textContent="♥".repeat(S.lives)+"♡".repeat(3-S.lives);$("#pips").innerHTML=Array.from({length:5},(_,i)=>`<s class="${i<S.hit?"on":""}"></s>`).join("")}
+function cells(str,help){return [...str].map((c,i)=>`<span class="cl"><b>${c}</b>${help?`<i>${2**(str.length-1-i)}</i>`:""}</span>`).join("")}
+function render(){const q=S.q,help=helpOn(S.level);
+  $("#qlab").textContent=q.dir==="db"?"Ubah ke biner ("+q.bits+" bit)":"Ubah ke desimal";
+  $("#q").innerHTML=q.dir==="db"?`<span class="big">${q.n}</span>`:cells(q.bin,help);
+  $("#a").innerHTML=q.dir==="db"?cells((S.typed+"_".repeat(q.bits)).slice(0,q.bits),help):`<span class="big">${S.typed||"…"}</span>`}
+
+function newQ(){
+  const [bits,d]=cfg(S.level),dir=d==="mix"?(Math.random()<.5?"db":"bd"):d,max=2**bits-1;let n;
+  do{n=1+Math.floor(Math.random()*max)}while(n===S.lastN&&max>1);S.lastN=n;
+  const bin=n.toString(2).padStart(bits,"0");S.q={bits,dir,n,bin};S.ans=dir==="db"?bin:String(n);S.typed="";
+  $("#a").className="ans";render();
+  S.t0=performance.now();S.dur=limit(bits,S.level);S.on=true;hud();
+  $("#hint").innerHTML=S.streak>=5?`<span class="combo">Combo ×${1+Math.floor(S.streak/5)} 🔥</span>`:(helpOn(S.level)?"Bobot bit ditampilkan di bawah tiap digit":"Tanpa bantuan: hitung sendiri!")}
+function tick(){if(S.on){const r=1-(performance.now()-S.t0)/S.dur;$("#tb").style.width=Math.max(0,r*100)+"%";if(r<=0)miss(true)}raf=requestAnimationFrame(tick)}
+function ok(){
+  S.on=false;const left=Math.max(0,1-(performance.now()-S.t0)/S.dur);
+  S.right++;S.streak++;S.hit++;S.score+=Math.round(10*S.level+left*10)*(1+Math.floor(S.streak/5));
+  $("#a").className="ans ok";beep(660+S.streak*20,.12);
+  if(S.hit>=5){S.level++;S.hit=0;hud();beep(880,.25,"triangle");const o=$("#toast");o.textContent="LEVEL "+S.level;o.classList.remove("hidden");setTimeout(()=>{o.classList.add("hidden");newQ()},1100)}
+  else{hud();setTimeout(newQ,450)}}
+function miss(timeout){
+  S.on=false;S.lives--;S.streak=0;$("#a").className="ans bad";beep(160,.25,"sawtooth");hud();
+  $("#hint").textContent=(timeout?"Waktu habis! ":"Kurang tepat. ")+"Jawabannya: "+S.ans;
+  if(S.lives<=0)setTimeout(end,1700);else setTimeout(newQ,1900)}
+document.addEventListener("keydown",e=>{
+  if(!S.on||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key==="Backspace"){e.preventDefault();S.typed=S.typed.slice(0,-1);render();return}
+  if(e.repeat||!/^[0-9]$/.test(e.key))return;
+  e.preventDefault();S.typed+=e.key;render();
+  if(S.typed.length>=S.ans.length)S.typed===S.ans?ok():miss(false)});
+
+function begin(n){name=n;S={on:false,level:1,score:0,lives:3,hit:0,streak:0,right:0,lastN:0};
+  $("#pl").classList.toggle("hidden",mode!=="pair");$("#pn").textContent=n;show("play");hud();newQ();cancelAnimationFrame(raf);tick()}
+function start(){try{audio=audio||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
+  if(mode==="pair"){P=[$("#n1").value.trim()||"Pemain 1",$("#n2").value.trim()||"Pemain 2"];res=[];turn=0;begin(P[0])}else begin($("#nm").value.trim()||"Pemain")}
+function end(){
+  cancelAnimationFrame(raf);S.on=false;saveLB({n:name,s:S.score,l:S.level});drawLB();sendScore({n:name,s:S.score,l:S.level,a:S.right,m:mode});setTimeout(loadClass,1500);
+  $("#who").textContent=name;$("#fs").textContent=S.score;$("#fl").textContent=S.level;$("#fa").textContent=S.right;
+  const vs=$("#vs"),btn=$("#again");vs.classList.add("hidden");$("#ovt").textContent="Permainan selesai!";btn.textContent="MAIN LAGI";
+  if(mode==="pair"){res[turn]={n:name,s:S.score,l:S.level};
+    if(turn===0){$("#ovt").textContent="Giliran selesai!";btn.textContent="GILIRAN "+P[1].toUpperCase()}
+    else{const a=res[0],b=res[1];$("#ovt").textContent=a.s===b.s?"Seri! Kalian kompak 🤝":(a.s>b.s?a:b).n+" menang! 🏆";vs.innerHTML=res.map(r=>`<div><span>${esc(r.n)}</span><b>${r.s} · Lv ${r.l}</b></div>`).join("");vs.classList.remove("hidden")}}
+  show("over")}
+function setMode(m){mode=m;$("#m1").classList.toggle("on",m==="solo");$("#m2").classList.toggle("on",m==="pair");$("#nm").classList.toggle("hidden",m==="pair");$("#pairin").classList.toggle("hidden",m!=="pair");$("#pdesc").classList.toggle("hidden",m!=="pair")}
+$("#go").onclick=start;
+$("#again").onclick=()=>{if(mode==="pair"&&turn===0){turn=1;begin(P[1])}else show("start")};
+$("#m1").onclick=()=>setMode("solo");$("#m2").onclick=()=>setMode("pair");
+$("#mute").onclick=()=>{muted=!muted;$("#mute").textContent="Suara: "+(muted?"OFF":"ON")};
+$("#nm").addEventListener("keydown",e=>{if(e.key==="Enter")start()});
+drawLB();loadClass();
+</script>
+</body>
+</html>
