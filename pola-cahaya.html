@@ -113,6 +113,10 @@ const FREQ=[329.6,415.3,523.3,659.3];
 const KEYS={"1":0,"2":1,"3":2,"4":3,q:0,w:1,a:2,s:3};
 let S={phase:"idle",seq:[],lives:3},run=0,audio=null,muted=false,mode="solo",P=[],res=[],turn=0,name="";
 
+const SHEET_URL="https://script.google.com/macros/s/AKfycbzs38C8Gj4I-7j72h4Evk9fijO_WSiJAu-4ouRWvS67TyMS28TbbB4cazxSogfDHV3TaA/exec";
+const GAME="pola";
+function sendScore(r){if(!SHEET_URL)return;try{fetch(SHEET_URL,{method:"POST",mode:"no-cors",body:JSON.stringify(Object.assign({g:GAME},r))}).catch(()=>{})}catch(e){}}
+async function loadClass(){if(!SHEET_URL)return;try{const rows=await (await fetch(SHEET_URL+"?game="+GAME)).json();const h='<div>Papan skor kelas</div>'+rows.slice(0,5).map((r,i)=>`<div><span>${i+1}. ${esc(String(r.n))}</span><b>${r.s} · Ronde ${r.l}</b></div>`).join("");$("#board").innerHTML=h;$("#board2").innerHTML=h}catch(e){}}
 function beep(f,d,t){if(muted||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.type=t||"sine";o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+d);o.stop(audio.currentTime+d)}catch(e){}}
 function loadLB(){try{return JSON.parse(localStorage.getItem("simon.lb")||"[]")}catch(e){return[]}}
 function saveLB(r){try{const a=loadLB();a.push(r);a.sort((x,y)=>y.s-x.s);localStorage.setItem("simon.lb",JSON.stringify(a.slice(0,5)))}catch(e){}}
@@ -152,7 +156,7 @@ function begin(n){name=n;run++;S={phase:"wait",seq:[Math.floor(Math.random()*4)]
 function start(){try{audio=audio||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
   if(mode==="pair"){P=[$("#n1").value.trim()||"Pemain 1",$("#n2").value.trim()||"Pemain 2"];res=[];turn=0;begin(P[0])}else begin($("#nm").value.trim()||"Pemain")}
 function end(){
-  S.phase="idle";saveLB({n:name,s:S.score,l:S.round});drawLB();
+  S.phase="idle";saveLB({n:name,s:S.score,l:S.round});drawLB();sendScore({n:name,s:S.score,l:S.round,a:S.right,m:mode});setTimeout(loadClass,1500);
   $("#who").textContent=name;$("#fs").textContent=S.score;$("#fl").textContent=S.round;$("#fa").textContent=S.right;
   const vs=$("#vs"),btn=$("#again");vs.classList.add("hidden");$("#ovt").textContent="Permainan selesai!";btn.textContent="MAIN LAGI";
   if(mode==="pair"){res[turn]={n:name,s:S.score,l:S.round};
@@ -165,7 +169,7 @@ $("#again").onclick=()=>{if(mode==="pair"&&turn===0){turn=1;begin(P[1])}else sho
 $("#m1").onclick=()=>setMode("solo");$("#m2").onclick=()=>setMode("pair");
 $("#mute").onclick=()=>{muted=!muted;$("#mute").textContent="Suara: "+(muted?"OFF":"ON")};
 $("#nm").addEventListener("keydown",e=>{if(e.key==="Enter")start()});
-drawLB();
+drawLB();loadClass();
 </script>
 </body>
 </html>
