@@ -17,6 +17,9 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 .dot{width:10px;height:10px;border-radius:50%;background:#34d399;box-shadow:0 0 10px #34d399;animation:p 1.6s infinite}
 .dot.off{background:#fb7185;box-shadow:0 0 10px #fb7185}
 @keyframes p{50%{opacity:.35}}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+.tabs button{background:#0b1226cc;color:var(--mut);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer}
+.tabs button.on{color:#04101f;background:linear-gradient(90deg,var(--c1),var(--c2));border-color:transparent}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
 .stat{background:#0b1226cc;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .stat b{display:block;font-size:clamp(20px,4vw,30px);color:var(--c1);font-variant-numeric:tabular-nums}
@@ -46,13 +49,14 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 <body>
 <div class="wrap">
   <div class="head">
-    <div class="logo">KEY RUSH · PERINGKAT KELAS</div>
+    <div class="logo" id="logo">PERINGKAT KELAS</div>
     <div class="live"><span class="dot" id="dot"></span><span id="upd">Memuat…</span></div>
   </div>
+  <div class="tabs" id="tabs"></div>
   <div class="stats">
     <div class="stat"><b id="s1">0</b><span>Pemain / pasangan</span></div>
     <div class="stat"><b id="s2">0</b><span>Rekor skor</span></div>
-    <div class="stat"><b id="s3">1</b><span>Level tertinggi</span></div>
+    <div class="stat"><b id="s3">1</b><span id="s3l">Level tertinggi</span></div>
   </div>
   <div class="podium" id="pod"></div>
   <div class="list" id="list"></div>
@@ -62,6 +66,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 <script>
 const SHEET_URL="https://script.google.com/macros/s/AKfycbzs38C8Gj4I-7j72h4Evk9fijO_WSiJAu-4ouRWvS67TyMS28TbbB4cazxSogfDHV3TaA/exec"; // tempel URL Web App Apps Script (berakhiran /exec) di antara tanda kutip
 const REFRESH_MS=5000;
+const GAMES=[{id:"keyrush",n:"Key Rush",full:"Level"},{id:"klik",n:"Klik Target",full:"Level"},{id:"pola",n:"Pola Cahaya",full:"Ronde"},{id:"sandi",n:"Sandi Kilat",full:"Level"}];
+let cur=GAMES[0];
 const DEMO=[{n:"Raka & Dina",s:1840,l:7},{n:"Salsa",s:1520,l:6},{n:"Bima & Tika",s:1390,l:6},{n:"Naufal",s:1120,l:5},{n:"Putri & Ayu",s:980,l:5},{n:"Fajar",s:760,l:4},{n:"Zahra",s:640,l:4},{n:"Dimas & Nia",s:420,l:3}];
 const $=s=>document.querySelector(s);
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e}
@@ -69,27 +75,30 @@ function best(rows){const m=new Map();for(const r of rows){const n=String(r.n||"
 function render(list){
   $("#s1").textContent=list.length;
   $("#s2").textContent=list.length?list[0].s:0;
+  $("#s3l").textContent=cur.full+" tertinggi";
   $("#s3").textContent=list.reduce((m,r)=>Math.max(m,r.l),1);
   const pod=$("#pod");pod.innerHTML="";
   [[1,"r2","🥈"],[0,"r1","🥇"],[2,"r3","🥉"]].forEach(([i,c,m])=>{
     const r=list[i],d=el("div","pod "+c);
-    d.append(el("div","medal",m),el("div","pn",r?r.n:"—"),el("div","ps",r?r.s:"–"),el("div","pl",r?"Level "+r.l:"Belum ada"));
+    d.append(el("div","medal",m),el("div","pn",r?r.n:"—"),el("div","ps",r?r.s:"–"),el("div","pl",r?cur.full+" "+r.l:"Belum ada"));
     pod.append(d)});
   const box=$("#list");box.innerHTML="";
   const max=list.length?list[0].s||1:1;
   list.slice(3,10).forEach((r,i)=>{
     const d=el("div","row"),b=el("i");b.style.width=Math.max(4,r.s/max*100)+"%";d.style.animationDelay=i*60+"ms";
-    const sc=el("div","sc",String(r.s));sc.append(el("small","","Lv "+r.l));
+    const sc=el("div","sc",String(r.s));sc.append(el("small","",(cur.full==="Ronde"?"Ronde ":"Lv ")+r.l));
     d.append(b,el("div","rk",String(i+4)),el("div","nm",r.n),sc);box.append(d)})}
 async function load(){
   try{
-    const rows=SHEET_URL?await (await fetch(SHEET_URL,{cache:"no-store"})).json():DEMO;
+    const rows=SHEET_URL?await (await fetch(SHEET_URL+"?game="+cur.id,{cache:"no-store"})).json():DEMO;
     render(best(Array.isArray(rows)?rows:[]));
     $("#dot").classList.remove("off");
     $("#upd").textContent="Live · diperbarui "+new Date().toLocaleTimeString("id-ID");
     $("#note").textContent=SHEET_URL?"":"Mode demo: isi SHEET_URL di file ini untuk menampilkan data asli.";
   }catch(e){$("#dot").classList.add("off");$("#upd").textContent="Menunggu koneksi…"}}
-load();setInterval(load,REFRESH_MS);
+function pick(id){cur=GAMES.find(g=>g.id===id)||GAMES[0];document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.id===cur.id));$("#logo").textContent=cur.n.toUpperCase()+" · PERINGKAT KELAS";try{history.replaceState(null,"","#"+cur.id)}catch(e){}load()}
+GAMES.forEach(g=>{const b=el("button","",g.n);b.dataset.id=g.id;b.onclick=()=>pick(g.id);$("#tabs").append(b)});
+pick(location.hash.slice(1));setInterval(load,REFRESH_MS);
 </script>
 </body>
 </html>
